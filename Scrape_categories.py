@@ -3,6 +3,9 @@ import re, time
 from bs4 import BeautifulSoup
 import DownloadImage as downloader
 import ExcelWriter as excel
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 
 
 def write_scraped_products(url):
@@ -63,8 +66,23 @@ def convert_weight_to_kg(weight : str):
                 weight = str(float(weight) / 1000) + "L"
             else:
                 weight = str(int(weight) / 1000) + "L"
+        else:
+            weight = None
     except Exception as e:
+        weight = None
         pass
+    return weight
+
+
+def find_weight_from_description(prod_desc):
+    weight = ""
+    prod_divs = prod_desc.findAll("div", attrs={"class": "productText"})
+    for div in prod_divs:
+        div = div.text.strip()
+        if len(div.split()) == 1:
+            weight = convert_weight_to_kg(div)
+            if weight is not None:
+                break
     return weight
 
 
@@ -75,7 +93,10 @@ def find_weight_from_title(title : str):
         sp_t = sp_t.split("x")[-1]
         if "g" in sp_t.lower() or "kg" in sp_t.lower() or "ml" in sp_t.lower() or "l" in sp_t.lower():
             weight = convert_weight_to_kg(sp_t)
-            break
+            if weight is not None:
+                break
+    if weight is None:
+        weight = ""
     return weight
 
 
@@ -83,7 +104,7 @@ def scrape_product(link, selenium_webdriver):
     print("Scraping product link...")
     selenium_webdriver.init_driver()
     selenium_webdriver.webdriver.get(link)
-    time.sleep(4)
+    WebDriverWait(selenium_webdriver.webdriver, 50).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#root > div.app > div.ln-o-page > div.ln-o-page__body > div > div > div > section:nth-child(1) > div > div > div.pd__right > h1')))
     selenium_webdriver.accept_cookies()
     try:
         page_src = selenium_webdriver.webdriver.page_source
@@ -96,7 +117,10 @@ def scrape_product(link, selenium_webdriver):
         price = increase_price_15_percent(price)
         price_per_unit = cost_div.find("span", attrs={"class": "pd__cost__per-unit"}).text.strip()
         weight = find_weight_from_title(prod_title)
-        prod_desc = str(page_obj.find("div", attrs={"class": "ln-c-card pd-details ln-c-card--soft"}))
+        prod_desc = page_obj.find("div", attrs={"class": "ln-c-card pd-details ln-c-card--soft"})
+        if weight == "":
+            weight = find_weight_from_description(prod_desc)
+        prod_desc = str(prod_desc)
         prod_sku = page_obj.find("span", attrs={"id": "productSKU"}).text.strip()
         img = page_obj.find("img", attrs={"class": "pd__image"}).attrs["src"]
         image_name = downloader.download_image(img, prod_sku)
@@ -111,6 +135,7 @@ def click_no_thanks(selenium_driver):
         selenium_driver.webdriver.find_element_by_id("smg-etr-invitation-no").click()
     except:
         pass
+
 
 def scrape_products_page(link, selenium_webdriver, list_scraped_products):
     prod_urls_list = []
