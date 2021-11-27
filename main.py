@@ -65,7 +65,7 @@ cat_urls_saved = read_cat_stored_urls()
 selenium_webdriver = WebDriver(CHROME_PATH)
 
 products_urls_list = []
-time_intervals = [3, 5, 6, 8, 10, 12, 15]
+time_intervals = [5, 8, 10, 12, 15]
 
 if __name__ == '__main__':
     excel.create_heading()

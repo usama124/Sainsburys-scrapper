@@ -8,7 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
 
-time_intervals = [3, 5, 6, 8, 10, 12, 15]
+time_intervals = [5, 8, 10, 12, 15]
 
 def write_scraped_products(url):
     f = open("record/scraped_products.txt", "a")
