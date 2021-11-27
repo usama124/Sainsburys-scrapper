@@ -74,18 +74,19 @@ if __name__ == '__main__':
     cat_scraped = []
     for data in cat_urls_saved:
         for key in data:
-            if len(data[key]) != 0:
-                cat_scraped.append(key)
-                print("Scraping " + key + " products...")
-                data[key] = list(set(data[key]))
-                for prod_url in data[key]:
-                    if prod_url not in list_scraped_products:
-                        scrapper.scrape_product(prod_url, selenium_webdriver)
-                        write_scraped_products(prod_url)
-                        list_scraped_products.append(prod_url)
-                        time.sleep(random.choice(time_intervals))
-                    else:
-                        print("=> already scraped " + prod_url)
+            if key != "christmas":
+                if len(data[key]) != 0:
+                    cat_scraped.append(key)
+                    print("Scraping " + key + " products...")
+                    data[key] = list(set(data[key]))
+                    for prod_url in data[key]:
+                        if prod_url not in list_scraped_products:
+                            scrapper.scrape_product(prod_url, selenium_webdriver)
+                            write_scraped_products(prod_url)
+                            list_scraped_products.append(prod_url)
+                            time.sleep(random.choice(time_intervals))
+                        else:
+                            print("=> already scraped " + prod_url)
 
     for cat in categories_list:
         cat_link = categories_list[cat]
