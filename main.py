@@ -74,9 +74,9 @@ if __name__ == '__main__':
     cat_scraped = []
     for data in cat_urls_saved:
         for key in data:
-            if key != "christmas":
-                if len(data[key]) != 0:
-                    cat_scraped.append(key)
+            if len(data[key]) != 0:
+                cat_scraped.append(key)
+                if key != "christmas":
                     print("Scraping " + key + " products...")
                     data[key] = list(set(data[key]))
                     for prod_url in data[key]:
