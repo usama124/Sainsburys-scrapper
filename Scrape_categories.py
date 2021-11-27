@@ -120,12 +120,12 @@ def scrape_product(link, selenium_webdriver):
     selenium_webdriver.webdriver.get(link)
     WebDriverWait(selenium_webdriver.webdriver, 50).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#root > div.app > div.ln-o-page > div.ln-o-page__body > div > div > div > section:nth-child(1) > div > div > div.pd__right > h1')))
     selenium_webdriver.accept_cookies()
-    try:
-        page_src = selenium_webdriver.webdriver.page_source
-        page_obj = BeautifulSoup(page_src, "lxml")
+    page_src = selenium_webdriver.webdriver.page_source
+    page_obj = BeautifulSoup(page_src, "lxml")
 
-        prod_title = page_obj.find("h1", attrs={"class": "pd__header"}).text.strip()
-        categories_list, tags = get_categories_tags(page_obj)
+    prod_title = page_obj.find("h1", attrs={"class": "pd__header"}).text.strip()
+    categories_list, tags = get_categories_tags(page_obj)
+    try:
         cost_div = page_obj.find("div", attrs={"class": "pd__cost"})
         price = cost_div.find("div", attrs={"data-test-id": "pd-retail-price"}).text.strip()
         price = increase_price_15_percent(price)
