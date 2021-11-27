@@ -123,6 +123,10 @@ def scrape_product(link, selenium_webdriver):
     page_src = selenium_webdriver.webdriver.page_source
     page_obj = BeautifulSoup(page_src, "lxml")
 
+    if "403 ERROR" in page_src:
+        time.sleep(30)
+        selenium_webdriver.webdriver.refresh()
+
     prod_title = page_obj.find("h1", attrs={"class": "pd__header"}).text.strip()
     categories_list, tags = get_categories_tags(page_obj)
     try:
