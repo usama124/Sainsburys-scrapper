@@ -1,4 +1,6 @@
 import configparser
+import json, time, random
+
 import Scrape_categories as scrapper
 from SeleniumDriver import WebDriver
 import ExcelWriter as excel
@@ -18,6 +20,17 @@ def confParser(section):
         value = value
         tmp_dict[option] = value
     return tmp_dict
+
+
+def read_cat_stored_urls():
+    list_prod = []
+    f = open("record/cat_urls_list.txt", "r")
+    line = f.readline().split("\n")[0]
+    while line != "" and line != None:
+        list_prod.append(json.loads(line))
+        line = f.readline().split("\n")[0]
+    f.close()
+    return list_prod
 
 
 def read_scraped_products():
@@ -46,19 +59,42 @@ categories_list = confParser("categories")
 
 list_scraped_products = read_scraped_products()
 
+cat_urls_saved = read_cat_stored_urls()
+
+
 selenium_webdriver = WebDriver(CHROME_PATH)
 
 products_urls_list = []
+time_intervals = [3, 5, 6, 8, 10, 12, 15]
 
 if __name__ == '__main__':
     excel.create_heading()
 
     print("\n\nScraping groceries...\n\n")
+    cat_scraped = []
+    for data in cat_urls_saved:
+        for key in data:
+            if len(data[key]) != 0:
+                cat_scraped.append(key)
+                print("Scraping " + key + " products...")
+                data[key] = list(set(data[key]))
+                for prod_url in data[key]:
+                    if prod_url not in list_scraped_products:
+                        scrapper.scrape_product(prod_url, selenium_webdriver)
+                        write_scraped_products(prod_url)
+                        list_scraped_products.append(prod_url)
+                        time.sleep(random.choice(time_intervals))
+                    else:
+                        print("=> already scraped " + prod_url)
 
     for cat in categories_list:
-        print(cat.replace("_", "") + "...\n")
         cat_link = categories_list[cat]
-        scrapper.scrape_products_page(cat_link, selenium_webdriver, list_scraped_products)
+        main_cat = cat.replace("_", "")
+        if main_cat not in cat_scraped:
+            print(main_cat + "...\n")
+            scrapper.scrape_products_page(main_cat, cat_link, selenium_webdriver, list_scraped_products)
+        else:
+            print(main_cat + " already scraped...")
 
     print("Finish...")
 

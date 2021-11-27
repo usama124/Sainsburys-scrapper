@@ -15,10 +15,11 @@ class WebDriver:
         CHROME_DRIVER_PATH = "ChromDriver/chromedriver"
         driver = None
         chrome_options = Options()
-        # chrome_options.add_argument("--headless")
+        #chrome_options.add_argument("--headless")
         chrome_options.add_argument("--window-size=%s" % WINDOW_SIZE)
         chrome_options.binary_location = self.chrome_path
-        chrome_options.add_argument(f'user-agent={str(ua.random)}')
+        chrome_options.add_argument("User-Agent="+str(ua.random))
+        chrome_options.add_argument(f'Referer=https://www.google.com/')
         chrome_options.add_argument('disable-infobars')
         chrome_options.add_argument("disable-notifications")
         self.webdriver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH, options=chrome_options)

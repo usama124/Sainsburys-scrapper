@@ -1,5 +1,5 @@
 import json
-import re, time
+import re, time, random
 from bs4 import BeautifulSoup
 import DownloadImage as downloader
 import ExcelWriter as excel
@@ -8,9 +8,17 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
 
+time_intervals = [3, 5, 6, 8, 10, 12, 15]
+
 def write_scraped_products(url):
     f = open("record/scraped_products.txt", "a")
     f.write(url + "\n")
+    f.close()
+
+
+def save_urls_to_file(cat_links):
+    f = open("record/cat_urls_list.txt", "a")
+    f.write(json.dumps(cat_links) + "\n")
     f.close()
 
 
@@ -78,11 +86,17 @@ def find_weight_from_description(prod_desc):
     weight = ""
     prod_divs = prod_desc.findAll("div", attrs={"class": "productText"})
     for div in prod_divs:
-        div = div.text.strip()
-        if len(div.split()) == 1:
-            weight = convert_weight_to_kg(div)
-            if weight is not None:
-                break
+        try:
+            div = div.text.strip()
+            if len(div.split()) == 1:
+                weight = convert_weight_to_kg(div)
+                if weight is not None:
+                    break
+        except Exception as e:
+            weight = None
+            pass
+    if weight is None:
+        weight = ""
     return weight
 
 
@@ -137,14 +151,18 @@ def click_no_thanks(selenium_driver):
         pass
 
 
-def scrape_products_page(link, selenium_webdriver, list_scraped_products):
+def scrape_products_page(main_cat, link, selenium_webdriver, list_scraped_products):
     prod_urls_list = []
     selenium_webdriver.init_driver()
     selenium_webdriver.webdriver.get(link)
     selenium_webdriver.accept_cookies()
-
+    try:
+        total_products = int(selenium_webdriver.webdriver.find_element_by_id("resultsHeading").text.split("(")[-1].split(" ")[0].replace(",", ""))
+    except:
+        total_products = -1
     counter = 0
     while True:
+        WebDriverWait(selenium_webdriver.webdriver, 50).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#productLister > ul')))
         page_obj = BeautifulSoup(selenium_webdriver.webdriver.page_source, "lxml")
         products_grid = page_obj.find("ul", attrs={"class": "productLister gridView"}).findAll("li", attrs={
             "class": "gridItem"})
@@ -158,22 +176,29 @@ def scrape_products_page(link, selenium_webdriver, list_scraped_products):
 
         try:
             selenium_webdriver.webdriver.find_element_by_css_selector('#productLister > div:nth-child(2) > ul.pages > li.next > a').click()
-            time.sleep(2)
+            time.sleep(random.choice(time_intervals))
             counter = 0
         except Exception as e:
-            print(e)
             click_no_thanks(selenium_webdriver)
             if counter == 2:
                 break
             counter = counter + 1
     selenium_webdriver.close_webdriver()
 
+    if len(prod_urls_list) >= (total_products - 10):
+        cat_links = {main_cat: prod_urls_list}
+        save_urls_to_file(cat_links)
+    else:
+        cat_links = {main_cat: []}
+        save_urls_to_file(cat_links)
     prod_urls_list = list(set(prod_urls_list))
-    try:
-        for prod_url in prod_urls_list:
+
+    for prod_url in prod_urls_list:
+        try:
             if prod_url not in list_scraped_products:
                 scrape_product(prod_url, selenium_webdriver)
                 write_scraped_products(prod_url)
                 list_scraped_products.append(prod_url)
-    except Exception as e:
-        pass
+                time.sleep(random.choice(time_intervals))
+        except Exception as e:
+            pass
