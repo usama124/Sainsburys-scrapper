@@ -31,5 +31,8 @@ class WebDriver:
             pass
 
     def close_webdriver(self):
-        self.webdriver.close()
+        try:
+            self.webdriver.close()
+        except:
+            pass
 

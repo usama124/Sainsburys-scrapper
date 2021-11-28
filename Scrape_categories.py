@@ -115,37 +115,50 @@ def find_weight_from_title(title : str):
 
 
 def scrape_product(link, selenium_webdriver):
+    is_scraped = False
     print("Scraping product link...")
-    selenium_webdriver.init_driver()
-    selenium_webdriver.webdriver.get(link)
-    WebDriverWait(selenium_webdriver.webdriver, 50).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#root > div.app > div.ln-o-page > div.ln-o-page__body > div > div > div > section:nth-child(1) > div > div > div.pd__right > h1')))
-    selenium_webdriver.accept_cookies()
-    page_src = selenium_webdriver.webdriver.page_source
-    page_obj = BeautifulSoup(page_src, "lxml")
+    conter = 0
+    while not is_scraped:
+        page_src = ""
+        try:
+            selenium_webdriver.init_driver()
+            selenium_webdriver.webdriver.get(link)
+            WebDriverWait(selenium_webdriver.webdriver, 50).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#root > div.app > div.ln-o-page > div.ln-o-page__body > div > div > div > section:nth-child(1) > div > div > div.pd__right > h1')))
+            selenium_webdriver.accept_cookies()
+            page_src = selenium_webdriver.webdriver.page_source
+            page_obj = BeautifulSoup(page_src, "lxml")
 
-    if "403 ERROR" in page_src:
-        time.sleep(30)
-        selenium_webdriver.webdriver.refresh()
+            prod_title = page_obj.find("h1", attrs={"class": "pd__header"}).text.strip()
+            categories_list, tags = get_categories_tags(page_obj)
 
-    prod_title = page_obj.find("h1", attrs={"class": "pd__header"}).text.strip()
-    categories_list, tags = get_categories_tags(page_obj)
-    try:
-        cost_div = page_obj.find("div", attrs={"class": "pd__cost"})
-        price = cost_div.find("div", attrs={"data-test-id": "pd-retail-price"}).text.strip()
-        price = increase_price_15_percent(price)
-        price_per_unit = cost_div.find("span", attrs={"class": "pd__cost__per-unit"}).text.strip()
-        weight = find_weight_from_title(prod_title)
-        prod_desc = page_obj.find("div", attrs={"class": "ln-c-card pd-details ln-c-card--soft"})
-        if weight == "":
-            weight = find_weight_from_description(prod_desc)
-        prod_desc = str(prod_desc)
-        prod_sku = page_obj.find("span", attrs={"id": "productSKU"}).text.strip()
-        img = page_obj.find("img", attrs={"class": "pd__image"}).attrs["src"]
-        image_name = downloader.download_image(img, prod_sku)
-        excel.write_excel_file(categories_list, tags, prod_sku, prod_title, price, price_per_unit, weight, prod_desc, image_name)
-    except Exception as e:
-        pass
+            cost_div = page_obj.find("div", attrs={"class": "pd__cost"})
+            price = cost_div.find("div", attrs={"data-test-id": "pd-retail-price"}).text.strip()
+            price = increase_price_15_percent(price)
+            price_per_unit = cost_div.find("span", attrs={"class": "pd__cost__per-unit"}).text.strip()
+            weight = find_weight_from_title(prod_title)
+            prod_desc = page_obj.find("div", attrs={"class": "ln-c-card pd-details ln-c-card--soft"})
+            if weight == "":
+                weight = find_weight_from_description(prod_desc)
+            prod_desc = str(prod_desc)
+            prod_sku = page_obj.find("span", attrs={"id": "productSKU"}).text.strip()
+            img = page_obj.find("img", attrs={"class": "pd__image"}).attrs["src"]
+            image_name = downloader.download_image(img, prod_sku)
+            excel.write_excel_file(categories_list, tags, prod_sku, prod_title, price, price_per_unit, weight, prod_desc, image_name)
+            is_scraped = True
+        except Exception as e:
+            if conter == 2:
+                break
+            if "403 ERROR" in page_src:
+                time.sleep(30)
+            elif "Something went wrong" in page_src:
+                time.sleep(5)
+
+            selenium_webdriver.close_webdriver()
+
+            conter = conter + 1
+            time.sleep(3)
     selenium_webdriver.close_webdriver()
+    return is_scraped
 
 
 def click_no_thanks(selenium_driver):
@@ -187,6 +200,7 @@ def scrape_products_page(main_cat, link, selenium_webdriver, list_scraped_produc
             if counter == 2:
                 break
             counter = counter + 1
+            time.sleep(3)
     selenium_webdriver.close_webdriver()
 
     if len(prod_urls_list) >= (total_products - 10):
@@ -197,12 +211,14 @@ def scrape_products_page(main_cat, link, selenium_webdriver, list_scraped_produc
         save_urls_to_file(cat_links)
     prod_urls_list = list(set(prod_urls_list))
 
-    for prod_url in prod_urls_list:
-        try:
-            if prod_url not in list_scraped_products:
-                scrape_product(prod_url, selenium_webdriver)
-                write_scraped_products(prod_url)
-                list_scraped_products.append(prod_url)
-                time.sleep(random.choice(time_intervals))
-        except Exception as e:
-            pass
+    # for prod_url in prod_urls_list:
+    #     try:
+    #         if prod_url not in list_scraped_products:
+    #             scrape_product(prod_url, selenium_webdriver)
+    #             write_scraped_products(prod_url)
+    #             list_scraped_products.append(prod_url)
+    #             time.sleep(random.choice(time_intervals))
+    #     except Exception as e:
+    #         time.sleep(30)
+    #         selenium_webdriver.close_webdriver()
+    #         pass
