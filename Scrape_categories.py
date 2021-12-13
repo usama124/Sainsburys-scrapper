@@ -8,7 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
 
-time_intervals = [5, 8, 10, 12, 15]
+time_intervals = [3, 4, 5]
 
 def write_scraped_products(url):
     f = open("record/scraped_products.txt", "a")
@@ -114,7 +114,7 @@ def find_weight_from_title(title : str):
     return weight
 
 
-def scrape_product(link, selenium_webdriver):
+def scrape_product(link, selenium_webdriver, main_cat):
     is_scraped = False
     print("Scraping product link...")
     conter = 0
@@ -123,14 +123,17 @@ def scrape_product(link, selenium_webdriver):
         try:
             selenium_webdriver.init_driver()
             selenium_webdriver.webdriver.get(link)
-            WebDriverWait(selenium_webdriver.webdriver, 50).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#root > div.app > div.ln-o-page > div.ln-o-page__body > div > div > div > section:nth-child(1) > div > div > div.pd__right > h1')))
+            selenium_webdriver.accept_cookies()
+            WebDriverWait(selenium_webdriver.webdriver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#root > div.app > div.ln-o-page > div.ln-o-page__body > div > div > div > section:nth-child(1) > div > div > div.pd__right > h1')))
             selenium_webdriver.accept_cookies()
             page_src = selenium_webdriver.webdriver.page_source
             page_obj = BeautifulSoup(page_src, "lxml")
 
             prod_title = page_obj.find("h1", attrs={"class": "pd__header"}).text.strip()
             categories_list, tags = get_categories_tags(page_obj)
-
+            cat = categories_list[0].replace(" ", "").strip().lower()
+            if cat != main_cat:
+                break
             cost_div = page_obj.find("div", attrs={"class": "pd__cost"})
             price = cost_div.find("div", attrs={"data-test-id": "pd-retail-price"}).text.strip()
             price = increase_price_15_percent(price)
@@ -149,7 +152,7 @@ def scrape_product(link, selenium_webdriver):
             if conter == 2:
                 break
             if "403 ERROR" in page_src:
-                time.sleep(30)
+                time.sleep(15)
             elif "Something went wrong" in page_src:
                 time.sleep(5)
 
@@ -209,7 +212,7 @@ def scrape_products_page(main_cat, link, selenium_webdriver, list_scraped_produc
     else:
         cat_links = {main_cat: []}
         save_urls_to_file(cat_links)
-    prod_urls_list = list(set(prod_urls_list))
+    # prod_urls_list = list(set(prod_urls_list))
 
     # for prod_url in prod_urls_list:
     #     try:

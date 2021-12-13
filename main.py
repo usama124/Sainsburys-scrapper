@@ -71,7 +71,7 @@ cat_urls_saved = read_cat_stored_urls()
 selenium_webdriver = WebDriver(CHROME_PATH)
 
 products_urls_list = []
-time_intervals = [5, 8, 10, 12, 15]
+time_intervals = [2, 3, 4, 5]
 
 if __name__ == '__main__':
     #excel.create_heading()
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                     data[key] = list(set(data[key]))
                     for prod_url in data[key]:
                         if prod_url not in list_scraped_products:
-                            is_scraped = scrapper.scrape_product(prod_url, selenium_webdriver)
+                            is_scraped = scrapper.scrape_product(prod_url, selenium_webdriver, key)
                             if is_scraped:
                                 write_scraped_products(prod_url)
                                 list_scraped_products.append(prod_url)
