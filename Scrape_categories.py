@@ -133,6 +133,7 @@ def scrape_product(link, selenium_webdriver, main_cat):
             categories_list, tags = get_categories_tags(page_obj)
             cat = categories_list[0].replace(" ", "").strip().lower()
             if cat != "":
+                print("Skipping " + main_cat + " products due to category exists...")
                 is_scraped = True
                 break
             cost_div = page_obj.find("div", attrs={"class": "pd__cost"})
@@ -149,6 +150,7 @@ def scrape_product(link, selenium_webdriver, main_cat):
             image_name = downloader.download_image(img, prod_sku)
             excel.write_excel_file(categories_list, tags, prod_sku, prod_title, price, price_per_unit, weight, prod_desc, image_name)
             is_scraped = True
+            print("Scraped " + main_cat + " product...")
         except Exception as e:
             if conter == 2:
                 break

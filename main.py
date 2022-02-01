@@ -88,7 +88,6 @@ if __name__ == '__main__':
             if len(data[key]) != 0:
                 cat_scraped.append(key)
                 if key != "christmas":
-                    print("Scraping " + key + " products...")
                     data[key] = list(set(data[key]))
                     for prod_url in data[key]:
                         if prod_url not in list_scraped_products:
