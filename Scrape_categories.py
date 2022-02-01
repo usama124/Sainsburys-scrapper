@@ -132,7 +132,8 @@ def scrape_product(link, selenium_webdriver, main_cat):
             prod_title = page_obj.find("h1", attrs={"class": "pd__header"}).text.strip()
             categories_list, tags = get_categories_tags(page_obj)
             cat = categories_list[0].replace(" ", "").strip().lower()
-            if cat != main_cat:
+            if cat != "":
+                is_scraped = True
                 break
             cost_div = page_obj.find("div", attrs={"class": "pd__cost"})
             price = cost_div.find("div", attrs={"data-test-id": "pd-retail-price"}).text.strip()

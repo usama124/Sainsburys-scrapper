@@ -1,5 +1,5 @@
 import configparser
-import json, time, random
+import json, time, random, os
 
 import Scrape_categories as scrapper
 from SeleniumDriver import WebDriver
@@ -56,6 +56,10 @@ def write_not_scraped_products(url):
     f.close()
 
 
+def file_exists(path):
+    return os.path.exists(path)
+
+
 general_conf = confParser("general_conf")
 CHROME_PATH = general_conf["chrome_path"]
 base_url = general_conf["base_url"]
@@ -74,7 +78,8 @@ products_urls_list = []
 time_intervals = [2, 3, 4, 5]
 
 if __name__ == '__main__':
-    #excel.create_heading()
+    if not file_exists("Data/sainsburys_products.xlsx"):
+        excel.create_heading()
 
     print("\n\nScraping groceries...\n\n")
     cat_scraped = []
